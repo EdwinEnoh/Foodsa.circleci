@@ -4,6 +4,7 @@ jobs:
     docker:
       - image: nginx
     steps:
+      - checkout
       - run:
           name: The First Step
           command: |
