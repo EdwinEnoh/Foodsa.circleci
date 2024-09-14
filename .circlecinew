@@ -1,0 +1,66 @@
+version: 2.1
+
+executors:
+  linux_executor:
+    docker:
+      - image: mcr.microsoft.com/dotnet/sdk:7.0 # Official .NET SDK Docker image
+
+jobs:
+  build:
+    executor: linux_executor
+    steps:
+      - checkout
+      - run:
+          name: Restore NuGet Packages
+          command: dotnet restore SimpleWebAppMVC.sln
+      - run:
+          name: Build Solution (Debug Configuration)
+          command: dotnet build SimpleWebAppMVC.sln --configuration Debug --no-restore
+      - run:
+          name: Build Solution (Release Configuration)
+          command: dotnet build SimpleWebAppMVC.sln --configuration Release --no-restore
+      - run:
+          name: Run Unit Tests
+          command: dotnet test SimpleWebAppMVC.sln --no-build
+      - run:
+          name: Publish Artifacts
+          command: dotnet publish SimpleWebAppMVC/SimpleWebAppMVC.csproj -c Release -o ./output
+      - persist_to_workspace:
+          root: ./output
+          paths:
+            - .
+
+  deploy_dev:
+    executor: linux_executor
+    steps:
+      - attach_workspace:
+          at: /workspace
+      - run:
+          name: Deploy to Development Environment
+          command: |
+            echo "Deploying to Development Environment"
+            # Replace this with your actual deployment script.
+            # For example, you could upload the build artifact to a cloud service.
+
+  deploy_stage:
+    executor: linux_executor
+    steps:
+      - attach_workspace:
+          at: /workspace
+      - run:
+          name: Deploy to Staging Environment
+          command: |
+            echo "Deploying to Staging Environment"
+            # Replace this with your actual deployment script.
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build
+      - deploy_dev:
+          requires:
+            - build
+      - deploy_stage:
+          requires:
+            - build
